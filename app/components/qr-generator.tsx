@@ -83,108 +83,127 @@ export default function QRPage() {
         </div>
       )}
 
-     <div>
-      <h1>QR Code Editor</h1> 
+      <div>
+        <h1>QR Code Editor</h1>
 
-     <div style={{ marginBottom: '20px' }}>
-        <input
-          type="text"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Enter text for QR code"
-          style={{ padding: '8px', width: '300px', color: 'black' }}
-        />
-        <button
-          onClick={generateQRCode}
-          style={{ padding: '8px 16px', marginLeft: '10px' }}
-        >
-          Generate QR Code
-        </button>
+        <div style={{ marginBottom: '20px' }}>
+          <div className='flex items-center group justify-center' onClick={() => window.open('https://github.com/euphydev/qrcode-geneditor', '_blank')}>
+            <span className='hover:text-yellow hover:font-bold hover:text-lg'>
+              Leave a star on GitHub
+
+            </span>
+
+            <img
+              src={'/star.svg'}
+              alt={'github star'}
+              style={{
+                height: "30px",
+                padding: "5px",
+              }}
+              className="transform transition-transform duration-300 ease-in-out group-hover:-rotate-45"
+            />
+          </div>
+          <input
+            type="text"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Enter text for QR code"
+            style={{ padding: '8px', width: '300px', color: 'black' }}
+          />
+          <button
+            onClick={generateQRCode}
+            style={{ padding: '8px 16px', marginLeft: '10px' }}
+          >
+            Generate QR Code
+          </button>
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <label>Error Correction Level:</label>
+          <select
+            value={selectedErrorCorrection.value}
+            onChange={handleErrorCorrectionChange}
+            style={{ padding: '8px', marginLeft: '10px', color: 'black' }}
+          >
+            {errorCorrectionOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <label>Output Type:</label>
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value as 'image/png' | 'image/jpeg' | 'image/webp')}
+            style={{ padding: '8px', marginLeft: '10px', color: 'black' }}
+          >
+            <option value="image/png">PNG</option>
+            <option value="image/jpeg">JPEG</option>
+            <option value="image/webp">WEBP</option>
+          </select>
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <label>Quality (0-1):</label>
+          <input
+            type="number"
+            value={quality}
+            onChange={(e) => setQuality(Number(e.target.value))}
+            min="0"
+            max="1"
+            step="0.1"
+            style={{ padding: '8px', width: '80px', marginLeft: '10px', color: 'black' }}
+          />
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <label>Padding (Margin):</label>
+          <input
+            type="number"
+            value={padding}
+            onChange={(e) => setPadding(Number(e.target.value))}
+            style={{ padding: '8px', width: '50px', marginLeft: '10px', color: 'black' }}
+          />
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <label>Size (px):</label>
+          <input
+            type="number"
+            step={20}
+            value={size}
+            onChange={(e) => setSize(Number(e.target.value))}
+            style={{ padding: '8px', width: '80px', marginLeft: '10px', color: 'black' }}
+          />
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <label>Foreground Color (Dark):</label>
+          <input
+            type="color"
+            value={fgColor}
+            onChange={(e) => setFgColor(e.target.value)}
+            style={{ padding: '2px', width: '50px', marginLeft: '10px', color: 'black' }}
+          />
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <label>Background Color (Light):</label>
+          <input
+            type="color"
+            value={bgColor}
+            onChange={(e) => setBgColor(e.target.value)}
+            style={{ padding: '2px', width: '50px', marginLeft: '10px', color: 'black' }}
+          />
+        </div>
+        <div>
+          <span>=== under construction ===</span>
+        </div>
+
       </div>
-
-      <div style={{ marginBottom: '20px' }}>
-        <label>Error Correction Level:</label>
-        <select
-          value={selectedErrorCorrection.value}
-          onChange={handleErrorCorrectionChange}
-          style={{ padding: '8px', marginLeft: '10px', color: 'black' }}
-        >
-          {errorCorrectionOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div style={{ marginBottom: '20px' }}>
-        <label>Output Type:</label>
-        <select
-          value={type}
-          onChange={(e) => setType(e.target.value as 'image/png' | 'image/jpeg' | 'image/webp')}
-          style={{ padding: '8px', marginLeft: '10px', color: 'black' }}
-        >
-          <option value="image/png">PNG</option>
-          <option value="image/jpeg">JPEG</option>
-          <option value="image/webp">WEBP</option>
-        </select>
-      </div>
-
-      <div style={{ marginBottom: '20px' }}>
-        <label>Quality (0-1):</label>
-        <input
-          type="number"
-          value={quality}
-          onChange={(e) => setQuality(Number(e.target.value))}
-          min="0"
-          max="1"
-          step="0.1"
-          style={{ padding: '8px', width: '80px', marginLeft: '10px', color: 'black' }}
-        />
-      </div>
-
-      <div style={{ marginBottom: '20px' }}>
-        <label>Padding (Margin):</label>
-        <input
-          type="number"
-          value={padding}
-          onChange={(e) => setPadding(Number(e.target.value))}
-          style={{ padding: '8px', width: '50px', marginLeft: '10px', color: 'black' }}
-        />
-      </div>
-
-      <div style={{ marginBottom: '20px' }}>
-        <label>Size (px):</label>
-        <input
-          type="number"
-          step={20}
-          value={size}
-          onChange={(e) => setSize(Number(e.target.value))}
-          style={{ padding: '8px', width: '80px', marginLeft: '10px', color: 'black' }}
-        />
-      </div>
-
-      <div style={{ marginBottom: '20px' }}>
-        <label>Foreground Color (Dark):</label>
-        <input
-          type="color"
-          value={fgColor}
-          onChange={(e) => setFgColor(e.target.value)}
-          style={{ padding: '2px', width: '50px', marginLeft: '10px', color: 'black' }}
-        />
-      </div>
-
-      <div style={{ marginBottom: '20px' }}>
-        <label>Background Color (Light):</label>
-        <input
-          type="color"
-          value={bgColor}
-          onChange={(e) => setBgColor(e.target.value)}
-          style={{ padding: '2px', width: '50px', marginLeft: '10px', color: 'black' }}
-        />
-      </div>
-
-     </div>
     </div>
   );
 }
