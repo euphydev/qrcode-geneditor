@@ -1,209 +1,345 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import QRCode from 'qrcode';
+import QRCode, { QRCodeToDataURLOptions } from 'qrcode';
+
+type ErrorCorrection = 'L' | 'M' | 'Q' | 'H';
+type OutputType = 'image/png' | 'image/jpeg' | 'image/webp';
+
+const ERROR_CORRECTION_OPTIONS: { value: ErrorCorrection; label: string }[] = [
+  { value: 'L', label: 'Low' },
+  { value: 'M', label: 'Medium' },
+  { value: 'Q', label: 'Quartile' },
+  { value: 'H', label: 'High' },
+];
+
+const OUTPUT_TYPES: { value: OutputType; label: string; ext: string }[] = [
+  { value: 'image/png', label: 'PNG', ext: 'png' },
+  { value: 'image/jpeg', label: 'JPEG', ext: 'jpg' },
+  { value: 'image/webp', label: 'WEBP', ext: 'webp' },
+];
 
 export default function QRPage() {
   const [text, setText] = useState('');
   const [qrCodeData, setQrCodeData] = useState('');
-  const [padding, setPadding] = useState(1);
-  const [fgColor, setFgColor] = useState("#000000FF");
-  const [bgColor, setBgColor] = useState("#FFFFFF");
-  const [size, setSize] = useState(256);
-  const errorCorrectionOptions = [
-    { value: 'L', label: 'Low' },
-    { value: 'M', label: 'Medium' },
-    { value: 'Q', label: 'Quartile' },
-    { value: 'H', label: 'High' },
-  ];
-  const [errorCorrection, setErrorCorrection] = useState<'L' | 'M' | 'Q' | 'H'>('H');
-  const [selectedErrorCorrection, setSelectedErrorCorrection] = useState(errorCorrectionOptions[3]);
-  const [type, setType] = useState<'image/png' | 'image/jpeg' | 'image/webp'>('image/jpeg');
-  const [quality, setQuality] = useState(0.3);
-
-  const generateQRCode = async () => {
-    try {
-      const options = {
-        errorCorrectionLevel: errorCorrection,
-        type: type,
-        quality: quality,
-        margin: padding,
-        color: {
-          dark: fgColor,
-          light: bgColor,
-        },
-        width: size,
-      };
-
-      const qrData = await QRCode.toDataURL(text, options);
-      setQrCodeData(qrData);
-    } catch (err) {
-      console.error('Error generating QR code', err);
-    }
-  };
+  const [padding, setPadding] = useState(2);
+  const [fgColor, setFgColor] = useState('#000000');
+  const [bgColor, setBgColor] = useState('#ffffff');
+  const [size, setSize] = useState(320);
+  const [errorCorrection, setErrorCorrection] = useState<ErrorCorrection>('H');
+  const [type, setType] = useState<OutputType>('image/png');
+  const [quality, setQuality] = useState(0.8);
 
   useEffect(() => {
-    if (text) {
-      generateQRCode();
+    if (!text.trim()) {
+      setQrCodeData('');
+      return;
     }
-  }, [padding, fgColor, bgColor, size, errorCorrection, type, quality]);
-
-  const handleErrorCorrectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedValue = e.target.value as 'L' | 'M' | 'Q' | 'H';
-    setErrorCorrection(selectedValue);
-    setSelectedErrorCorrection(errorCorrectionOptions.find(option => option.value === selectedValue) || errorCorrectionOptions[3]);
-  };
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const options: QRCodeToDataURLOptions =
+          type === 'image/png'
+            ? {
+                errorCorrectionLevel: errorCorrection,
+                type,
+                margin: padding,
+                color: { dark: fgColor, light: bgColor },
+                width: size,
+              }
+            : {
+                errorCorrectionLevel: errorCorrection,
+                type,
+                margin: padding,
+                color: { dark: fgColor, light: bgColor },
+                width: size,
+                rendererOpts: { quality },
+              };
+        const dataUrl = await QRCode.toDataURL(text, options);
+        if (!cancelled) setQrCodeData(dataUrl);
+      } catch (err) {
+        console.error('Error generating QR code', err);
+      }
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [text, padding, fgColor, bgColor, size, errorCorrection, type, quality]);
 
   const downloadQRCode = () => {
-    if (qrCodeData) {
-      const link = document.createElement('a');
-      link.href = qrCodeData;
-      link.download = 'qrcode.png'; // Change the file name here if needed
-      link.click();
-    }
+    if (!qrCodeData) return;
+    const ext = OUTPUT_TYPES.find((o) => o.value === type)?.ext ?? 'png';
+    const link = document.createElement('a');
+    link.href = qrCodeData;
+    link.download = `qrcode.${ext}`;
+    link.click();
   };
 
   return (
-    <div className='flex' style={{ textAlign: 'center', padding: '20px' }}>
-
-      {qrCodeData && (
-        <div style={{ marginTop: '20px' }}>
-          <img src={qrCodeData} alt="Generated QR Code" />
+    <div className="mx-auto flex min-h-screen max-w-5xl flex-col px-6 py-10 sm:px-10">
+      <header className="mb-10 flex items-start justify-between gap-6">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+            QR Code Editor
+          </h1>
+          <p className="mt-1 text-sm text-ink-dim">
+            Generate and style a QR code, live, right in your browser.
+          </p>
         </div>
-      )}
+        <a
+          href="https://github.com/euphydev/qrcode-geneditor"
+          target="_blank"
+          rel="noreferrer"
+          className="group flex shrink-0 items-center gap-1.5 whitespace-nowrap pt-1 text-sm text-ink-dim transition-colors hover:text-accent"
+        >
+          <img
+            src="/star.svg"
+            alt=""
+            className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-rotate-45"
+          />
+          Star on GitHub
+        </a>
+      </header>
 
-      {qrCodeData && (
-        <div style={{ marginTop: '20px' }}>
+      <div className="grid flex-1 grid-cols-1 gap-10 md:grid-cols-2">
+        <section className="flex flex-col">
+          <div className="relative aspect-square w-full border border-line bg-paper-raised p-8">
+            <CropMarks />
+            <div className="flex h-full w-full items-center justify-center">
+              {qrCodeData ? (
+                <img
+                  src={qrCodeData}
+                  alt="Generated QR code"
+                  className="max-h-full max-w-full"
+                  style={{ imageRendering: 'pixelated' }}
+                />
+              ) : (
+                <div className="flex flex-col items-center gap-3 text-center">
+                  <div
+                    className="h-28 w-28 border border-dashed border-line"
+                    style={{
+                      backgroundImage: 'radial-gradient(var(--line) 1px, transparent 1px)',
+                      backgroundSize: '8px 8px',
+                    }}
+                  />
+                  <p className="max-w-[16rem] text-sm text-ink-dim">
+                    Your QR code will appear here once you enter some content.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-3 divide-x divide-line border border-line font-mono text-xs">
+            <Stat label="Size" value={`${size}×${size}`} />
+            <Stat label="Format" value={OUTPUT_TYPES.find((o) => o.value === type)?.label ?? ''} />
+            <Stat label="ECC" value={errorCorrection} />
+          </div>
+
           <button
             onClick={downloadQRCode}
-            style={{ padding: '8px 16px', marginTop: '10px', color: 'black' }}
+            disabled={!qrCodeData}
+            className="mt-4 w-full border border-ink bg-ink py-2.5 text-sm font-medium text-paper transition-colors hover:border-accent hover:bg-accent disabled:cursor-not-allowed disabled:border-line disabled:bg-transparent disabled:text-ink-dim"
           >
-            Download QR Code
+            Download image
           </button>
-        </div>
-      )}
+        </section>
 
-      <div>
-        <h1>QR Code Editor</h1>
-
-        <div style={{ marginBottom: '20px' }}>
-          <div className='flex items-center group justify-center' onClick={() => window.open('https://github.com/euphydev/qrcode-geneditor', '_blank')}>
-            <span className='hover:text-yellow hover:font-bold hover:text-lg'>
-              Leave a star on GitHub
-
-            </span>
-
-            <img
-              src={'/star.svg'}
-              alt={'github star'}
-              style={{
-                height: "30px",
-                padding: "5px",
-              }}
-              className="transform transition-transform duration-300 ease-in-out group-hover:-rotate-45"
+        <section className="flex flex-col gap-8">
+          <Field label="Content">
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Enter a URL, message, or any text…"
+              rows={3}
+              className="w-full resize-none border border-line bg-paper-raised px-3 py-2 font-mono text-sm text-ink placeholder:text-ink-dim focus:border-accent focus:outline-none"
             />
-          </div>
-          <input
-            type="text"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Enter text for QR code"
-            style={{ padding: '8px', width: '300px', color: 'black' }}
-          />
-          <button
-            onClick={generateQRCode}
-            style={{ padding: '8px 16px', marginLeft: '10px' }}
-          >
-            Generate QR Code
-          </button>
-        </div>
+          </Field>
 
-        <div style={{ marginBottom: '20px' }}>
-          <label>Error Correction Level:</label>
-          <select
-            value={selectedErrorCorrection.value}
-            onChange={handleErrorCorrectionChange}
-            style={{ padding: '8px', marginLeft: '10px', color: 'black' }}
-          >
-            {errorCorrectionOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+          <Group title="Appearance">
+            <div className="flex gap-6">
+              <ColorField label="Foreground" value={fgColor} onChange={setFgColor} />
+              <ColorField label="Background" value={bgColor} onChange={setBgColor} />
+            </div>
+          </Group>
 
-        <div style={{ marginBottom: '20px' }}>
-          <label>Output Type:</label>
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value as 'image/png' | 'image/jpeg' | 'image/webp')}
-            style={{ padding: '8px', marginLeft: '10px', color: 'black' }}
-          >
-            <option value="image/png">PNG</option>
-            <option value="image/jpeg">JPEG</option>
-            <option value="image/webp">WEBP</option>
-          </select>
-        </div>
+          <Group title="Output">
+            <Field label="Error correction">
+              <Segmented
+                options={ERROR_CORRECTION_OPTIONS}
+                value={errorCorrection}
+                onChange={(v) => setErrorCorrection(v)}
+              />
+            </Field>
+            <Field label="File format">
+              <Segmented options={OUTPUT_TYPES} value={type} onChange={(v) => setType(v)} />
+            </Field>
+            {type !== 'image/png' && (
+              <SliderField
+                label="Quality"
+                value={quality}
+                min={0.1}
+                max={1}
+                step={0.1}
+                display={quality.toFixed(1)}
+                onChange={setQuality}
+              />
+            )}
+          </Group>
 
-        <div style={{ marginBottom: '20px' }}>
-          <label>Quality (0-1):</label>
-          <input
-            type="number"
-            value={quality}
-            onChange={(e) => setQuality(Number(e.target.value))}
-            min="0"
-            max="1"
-            step="0.1"
-            style={{ padding: '8px', width: '80px', marginLeft: '10px', color: 'black' }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '20px' }}>
-          <label>Padding (Margin):</label>
-          <input
-            type="number"
-            value={padding}
-            onChange={(e) => setPadding(Number(e.target.value))}
-            style={{ padding: '8px', width: '50px', marginLeft: '10px', color: 'black' }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '20px' }}>
-          <label>Size (px):</label>
-          <input
-            type="number"
-            step={20}
-            value={size}
-            onChange={(e) => setSize(Number(e.target.value))}
-            style={{ padding: '8px', width: '80px', marginLeft: '10px', color: 'black' }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '20px' }}>
-          <label>Foreground Color (Dark):</label>
-          <input
-            type="color"
-            value={fgColor}
-            onChange={(e) => setFgColor(e.target.value)}
-            style={{ padding: '2px', width: '50px', marginLeft: '10px', color: 'black' }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '20px' }}>
-          <label>Background Color (Light):</label>
-          <input
-            type="color"
-            value={bgColor}
-            onChange={(e) => setBgColor(e.target.value)}
-            style={{ padding: '2px', width: '50px', marginLeft: '10px', color: 'black' }}
-          />
-        </div>
-        <div>
-          <span>=== under construction ===</span>
-        </div>
-
+          <Group title="Dimensions">
+            <SliderField
+              label="Size"
+              value={size}
+              min={128}
+              max={1024}
+              step={32}
+              display={`${size}px`}
+              onChange={setSize}
+            />
+            <SliderField
+              label="Margin"
+              value={padding}
+              min={0}
+              max={10}
+              step={1}
+              display={`${padding}`}
+              onChange={setPadding}
+            />
+          </Group>
+        </section>
       </div>
     </div>
+  );
+}
+
+function CropMarks() {
+  const corner = 'absolute h-3 w-3 border-ink-dim';
+  return (
+    <>
+      <span className={`${corner} left-2 top-2 border-l border-t`} />
+      <span className={`${corner} right-2 top-2 border-r border-t`} />
+      <span className={`${corner} bottom-2 left-2 border-b border-l`} />
+      <span className={`${corner} bottom-2 right-2 border-b border-r`} />
+    </>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="px-3 py-2">
+      <div className="text-ink-dim">{label}</div>
+      <div className="mt-0.5 text-ink">{value}</div>
+    </div>
+  );
+}
+
+function Group({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="border-t border-line pt-6">
+      <h2 className="mb-4 text-sm font-medium text-ink">{title}</h2>
+      <div className="flex flex-col gap-5">{children}</div>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="flex flex-col gap-2">
+      <span className="text-sm font-medium text-ink">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+function ColorField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <label className="flex flex-col gap-2">
+      <span className="text-sm font-medium text-ink">{label}</span>
+      <div className="flex items-center gap-2">
+        <input
+          type="color"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-8 w-8 cursor-pointer"
+        />
+        <span className="font-mono text-xs text-ink-dim">{value.toUpperCase()}</span>
+      </div>
+    </label>
+  );
+}
+
+function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: T; label: string }[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div className="flex flex-wrap border border-line">
+      {options.map((option, i) => (
+        <button
+          key={option.value}
+          type="button"
+          onClick={() => onChange(option.value)}
+          className={`flex-1 whitespace-nowrap px-3 py-1.5 text-sm transition-colors ${
+            i !== 0 ? 'border-l border-line' : ''
+          } ${
+            value === option.value
+              ? 'bg-ink text-paper'
+              : 'bg-transparent text-ink-dim hover:text-ink'
+          }`}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function SliderField({
+  label,
+  value,
+  min,
+  max,
+  step,
+  display,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  display: string;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <label className="flex flex-col gap-2">
+      <span className="flex items-baseline justify-between text-sm font-medium text-ink">
+        {label}
+        <span className="font-mono text-xs font-normal text-ink-dim">{display}</span>
+      </span>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+      />
+    </label>
   );
 }

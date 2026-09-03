@@ -9,8 +9,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        paper: "var(--paper)",
+        "paper-raised": "var(--paper-raised)",
+        ink: "var(--ink)",
+        "ink-dim": "var(--ink-dim)",
+        line: "var(--line)",
+        accent: "var(--accent)",
+        "accent-ink": "var(--accent-ink)",
+      },
+      fontFamily: {
+        sans: ["var(--font-plex-sans)"],
+        mono: ["var(--font-plex-mono)"],
       },
     },
   },

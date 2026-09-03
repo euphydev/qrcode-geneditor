@@ -2,8 +2,7 @@ import QRPage from "./components/qr-generator";
 
 export default function Home() {
   return (
-
-    <div className="flex flex-col items-center">
+    <div className="min-h-screen">
       <QRPage />
     </div>
   );
